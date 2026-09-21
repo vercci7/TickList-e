@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f5f2">
+  <title>Minhas listas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+
+    <!-- Tela inicial: cartões das listas -->
+    <section id="home-view" class="view home">
+      <header class="home-header">
+        <h1>Listas</h1>
+      </header>
+
+      <button id="btn-empty-new" class="empty" type="button" hidden>
+        <span class="empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="52" height="52" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="12" y="8" width="40" height="48" rx="8"/>
+            <path d="M22 22h20M22 32h20M22 42h10"/>
+          </svg>
+          <span class="empty-plus">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </span>
+        </span>
+        <span class="empty-title">Criar nova lista</span>
+        <span class="empty-text">Suas listas vão aparecer aqui como cartões.</span>
+      </button>
+
+      <div id="cards" class="cards"></div>
+    </section>
+
+    <!-- Editor de uma lista -->
+    <section id="editor-view" class="view editor" hidden>
+      <header class="topbar">
+        <button id="btn-back" class="icon-btn" type="button" aria-label="Voltar para as listas">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 5l-7 7 7 7"/>
+          </svg>
+        </button>
+        <button id="btn-delete-list" class="icon-btn danger" type="button" aria-label="Excluir lista">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>
+          </svg>
+        </button>
+      </header>
+
+      <article class="sheet">
+        <textarea id="title" class="title" rows="1" maxlength="120" placeholder="Título da lista" aria-label="Título da lista"></textarea>
+
+        <ul id="items" class="items"></ul>
+
+        <div class="add-row">
+          <span class="add-box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </span>
+          <input id="new-item" class="new-item" type="text" maxlength="300" placeholder="Adicionar item" autocomplete="off" enterkeyhint="enter" aria-label="Adicionar item">
+        </div>
+
+        <footer id="sheet-footer" class="sheet-footer" hidden>
+          <span id="counter" class="counter" aria-live="polite">0 de 0 concluídos</span>
+          <button id="btn-uncheck-all" class="text-btn" type="button">Desmarcar todos</button>
+        </footer>
+      </article>
+    </section>
+
+    <!-- Botão flutuante para criar nova lista -->
+    <button id="btn-new" class="fab" type="button" aria-label="Criar nova lista">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+    </button>
+  </main>
+
+  <!-- Confirmação para excluir lista -->
+  <dialog id="confirm-dialog" class="dialog">
+    <form method="dialog">
+      <h2>Excluir esta lista?</h2>
+      <p>A lista e todos os itens dela serão apagados.</p>
+      <div class="dialog-actions">
+        <button value="cancel" class="btn">Cancelar</button>
+        <button value="confirm" class="btn btn-danger">Excluir</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
