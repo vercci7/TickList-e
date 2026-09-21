@@ -29,6 +29,10 @@
   let lists = load();
   let currentId = null;
   let navigatedInApp = false;
+  let reorderTimer = null;
+
+  const REORDER_DELAY = 400;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   /* ---------- Armazenamento ---------- */
 
@@ -150,6 +154,7 @@
       discardIfEmpty(currentId);
       currentId = null;
     }
+    cancelReorder();
     document.title = 'Minhas listas';
     els.editor.hidden = true;
     els.home.hidden = false;
@@ -174,7 +179,7 @@
     card.append(h('span', 'card-title' + (title ? '' : ' untitled'), title || 'Sem título'));
 
     const body = h('span', 'card-items');
-    list.items.slice(0, PREVIEW_LIMIT).forEach((item) => {
+    sortedItems(list).slice(0, PREVIEW_LIMIT).forEach((item) => {
       const row = h('span', 'card-item' + (item.done ? ' done' : ''));
       row.append(h('span', 'mini-box'), h('span', 'card-text', item.text));
       body.append(row);
@@ -208,7 +213,8 @@
     els.editor.hidden = false;
 
     els.title.value = list.title;
-    els.items.replaceChildren(...list.items.map(itemEl));
+    cancelReorder();
+    els.items.replaceChildren(...sortedItems(list).map(itemEl));
     els.newItem.value = '';
     autosizeAll();
     updateFooter();
@@ -262,8 +268,14 @@
     list.items.push(item);
     touch(list);
 
+    // Se há uma reordenação pendente, resolve antes para o DOM ficar em ordem
+    if (reorderTimer) {
+      cancelReorder();
+      reorderItems(false);
+    }
+
     const li = itemEl(item);
-    els.items.append(li);
+    els.items.insertBefore(li, els.items.querySelector('.item.done'));
     autosize(li.querySelector('.item-text'));
     updateFooter();
   }
@@ -293,6 +305,67 @@
     els.uncheckAll.disabled = done === 0;
   }
 
+  /* ---------- Ordem: não marcados em cima, marcados embaixo ---------- */
+
+  // A lista guarda a ordem original; só a exibição separa marcados e não marcados.
+  // Assim, ao desmarcar, o item volta para o lugar de onde veio.
+  function sortedItems(list) {
+    return [...list.items.filter((i) => !i.done), ...list.items.filter((i) => i.done)];
+  }
+
+  function scheduleReorder() {
+    clearTimeout(reorderTimer);
+    reorderTimer = setTimeout(() => {
+      reorderTimer = null;
+      reorderItems(true);
+    }, REORDER_DELAY);
+  }
+
+  function cancelReorder() {
+    clearTimeout(reorderTimer);
+    reorderTimer = null;
+  }
+
+  function reorderItems(animate) {
+    const list = currentList();
+    if (!list) return;
+
+    const nodes = new Map();
+    els.items.querySelectorAll('.item').forEach((li) => nodes.set(li.dataset.id, li));
+
+    const firstTops = new Map();
+    nodes.forEach((li, id) => firstTops.set(id, li.getBoundingClientRect().top));
+
+    // Só move o que está fora do lugar
+    const active = document.activeElement;
+    let cursor = els.items.firstElementChild;
+    sortedItems(list).forEach((item) => {
+      const li = nodes.get(item.id);
+      if (!li) return;
+      while (cursor && cursor.dataset.removed) cursor = cursor.nextElementSibling;
+      if (li === cursor) cursor = cursor.nextElementSibling;
+      else els.items.insertBefore(li, cursor);
+    });
+
+    // Mover um elemento no DOM tira o foco dele: devolve o foco
+    if (active && active !== document.body && document.activeElement !== active) {
+      active.focus({ preventScroll: true });
+    }
+
+    if (!animate || reduceMotion.matches) return;
+
+    // Anima cada item do lugar antigo até o novo
+    nodes.forEach((li, id) => {
+      if (li.dataset.removed) return;
+      const dy = firstTops.get(id) - li.getBoundingClientRect().top;
+      if (Math.abs(dy) < 1) return;
+      li.animate(
+        [{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }],
+        { duration: 240, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' }
+      );
+    });
+  }
+
   /* ---------- Eventos: itens ---------- */
 
   els.items.addEventListener('change', (e) => {
@@ -305,6 +378,7 @@
     li.classList.toggle('done', item.done);
     touch(currentList());
     updateFooter();
+    scheduleReorder();
   });
 
   els.items.addEventListener('input', (e) => {
@@ -393,6 +467,8 @@
     });
     touch(list);
     updateFooter();
+    cancelReorder();
+    reorderItems(true);
   });
 
   els.deleteList.addEventListener('click', () => {
